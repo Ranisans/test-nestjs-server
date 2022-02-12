@@ -1,14 +1,15 @@
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
+
+import User from 'database/entities/user.entity';
+import { passwordHashing } from 'utils/passwordHashing.util';
+import { CreateUserDto } from './dto/create-user.dto';
+import { UpdateUserDto } from './dto/update-user.dto';
 import {
   USER_NOT_FOUND,
   USER_WITH_THIS_EMAIL_DOES_NOT_EXIST,
 } from 'constants/api';
-import User from 'database/entities/user.entity';
-import { Repository } from 'typeorm';
-
-import { CreateUserDto } from './dto/create-user.dto';
-import { UpdateUserDto } from './dto/update-user.dto';
 
 @Injectable()
 export class UsersService {
@@ -46,6 +47,11 @@ export class UsersService {
   }
 
   async update(id: number, updateUserDto: UpdateUserDto) {
+    const { password } = updateUserDto;
+    if (password) {
+      const hashedPassword = await passwordHashing(password);
+      updateUserDto.password = hashedPassword;
+    }
     await this.userRepository.update(id, updateUserDto);
     const user = this.userRepository.findOne(id);
     if (user) {

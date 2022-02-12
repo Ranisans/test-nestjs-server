@@ -5,15 +5,16 @@ import { ConfigService } from '@nestjs/config';
 
 import { UsersService } from 'users/users.service';
 import { CreateUserDto } from 'users/dto/create-user.dto';
-import { ROUNDS } from 'constants/authentication';
 import PostgresErrorCode from 'constants/postgresErrorCodes.enum';
 import User from 'database/entities/user.entity';
 import TokenPayload from './interfaces/tokenPayload.interface';
+import { passwordHashing } from 'utils/passwordHashing.util';
 import {
   INTERNAL_SERVER_ERROR,
   USER_WITH_THAT_EMAIL_ALREADY_EXISTS,
   WRONG_CREDENTIALS_PROVIDED,
 } from 'constants/api';
+import { EMPTY_COOKIE } from 'constants/authentication';
 
 @Injectable()
 export class AuthenticationService {
@@ -24,7 +25,7 @@ export class AuthenticationService {
   ) {}
 
   async register(registrationData: CreateUserDto) {
-    const hashedPassword = await bcrypt.hash(registrationData.password, ROUNDS);
+    const hashedPassword = await passwordHashing(registrationData.password);
 
     try {
       const createdUser = await this.usersService.create({
@@ -74,7 +75,7 @@ export class AuthenticationService {
   }
 
   getCookieForLogOut() {
-    return `Authentication=; HttpOnly; Path=/; Max-Age=0`;
+    return EMPTY_COOKIE;
   }
 
   private async verifyPassword(
