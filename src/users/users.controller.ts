@@ -79,15 +79,15 @@ export class UsersController {
   @UseGuards(JwtAuthenticationGuard)
   async getPdf(@Req() request: Request, @Body() emailDto: EmailDto) {
     const { res } = request;
-    const pdfFile = await this.usersService.getPdf(emailDto.email);
+    const pdf = await this.usersService.getPdf(emailDto.email);
 
     res.set({
       'Content-Type': 'application/pdf',
       'Content-Disposition': `attachment; filename=${emailDto.email}.pdf`,
-      'Content-Length': pdfFile.length,
+      'Content-Length': pdf.length,
     });
 
-    res.end(pdfFile);
+    res.end(pdf);
   }
 
   @Get(':id')

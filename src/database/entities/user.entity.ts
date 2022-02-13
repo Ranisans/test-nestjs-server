@@ -24,5 +24,5 @@ export default class User {
 
   @Exclude()
   @Column({ type: 'bytea', nullable: true })
-  pdfFile: Buffer;
+  pdf: Buffer;
 }

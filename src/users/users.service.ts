@@ -120,7 +120,7 @@ export class UsersService {
         image,
       });
 
-      this.userRepository.update(user.id, { pdfFile: result });
+      this.userRepository.update(user.id, { pdf: result });
     } catch (error) {
       return { result: false };
     }
@@ -131,10 +131,10 @@ export class UsersService {
     // if a user with this email - this.findByEmail will throw the USER_NOT_FOUND error
     const user = await this.findByEmail(email);
 
-    const { pdfFile } = user;
+    const { pdf } = user;
 
-    if (pdfFile) {
-      return pdfFile;
+    if (pdf) {
+      return pdf;
     }
     throw new HttpException(USER_HAS_NO_PDF_FILE, HttpStatus.BAD_REQUEST);
   }
