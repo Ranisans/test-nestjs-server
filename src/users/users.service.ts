@@ -60,6 +60,15 @@ export class UsersService {
     throw new HttpException(USER_NOT_FOUND, HttpStatus.NOT_FOUND);
   }
 
+  async updateImage(id: number, imageUrl: string) {
+    await this.userRepository.update(id, { image: imageUrl });
+    const user = this.userRepository.findOne(id);
+    if (user) {
+      return user;
+    }
+    throw new HttpException(USER_NOT_FOUND, HttpStatus.NOT_FOUND);
+  }
+
   async remove(id: number) {
     const deleteResponse = await this.userRepository.delete(id);
     if (!deleteResponse.affected) {

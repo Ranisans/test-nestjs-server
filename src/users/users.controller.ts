@@ -10,6 +10,7 @@ import {
   ClassSerializerInterceptor,
   Req,
   HttpCode,
+  Post,
 } from '@nestjs/common';
 
 import { UsersService } from './users.service';
@@ -17,6 +18,7 @@ import { UpdateUserDto } from './dto/update-user.dto';
 import { JwtAuthenticationGuard } from 'authentication/guards/jwtAuthentication.guard';
 import RequestWithUser from 'authentication/interfaces/requestWithUser.interface';
 import { EMPTY_COOKIE } from 'constants/authentication';
+import { AddImageDto } from './dto/add-image.dto';
 
 @Controller('users')
 @UseInterceptors(ClassSerializerInterceptor)
@@ -46,5 +48,17 @@ export class UsersController {
     const { user, res } = request;
     this.usersService.remove(user.id);
     res.setHeader('Set-Cookie', EMPTY_COOKIE);
+  }
+
+  @Post('update-image')
+  @UseGuards(JwtAuthenticationGuard)
+  updateImage(
+    @Req() request: RequestWithUser,
+    @Body() addImageDto: AddImageDto,
+  ) {
+    const {
+      user: { id },
+    } = request;
+    return this.usersService.updateImage(id, addImageDto.imageUrl);
   }
 }
