@@ -21,6 +21,7 @@ import RequestWithUser from 'authentication/interfaces/requestWithUser.interface
 import { EMPTY_COOKIE } from 'constants/authentication';
 import { AddImageDto } from './dto/add-image.dto';
 import { EmailDto } from './dto/email.dto';
+import { UpdatePasswordDto } from './dto/update-password.dto';
 
 @Controller('users')
 @UseInterceptors(ClassSerializerInterceptor)
@@ -35,6 +36,16 @@ export class UsersController {
   ) {
     const { user } = request;
     return this.usersService.update(user.id, updateUserDto);
+  }
+
+  @Patch('password')
+  @UseGuards(JwtAuthenticationGuard)
+  updatePassword(
+    @Req() request: RequestWithUser,
+    @Body() updateUserDto: UpdatePasswordDto,
+  ) {
+    const { user } = request;
+    return this.usersService.updatePassword(user.id, updateUserDto);
   }
 
   @HttpCode(200)

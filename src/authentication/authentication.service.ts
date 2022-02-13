@@ -4,7 +4,7 @@ import * as bcrypt from 'bcrypt';
 import { ConfigService } from '@nestjs/config';
 
 import { UsersService } from 'users/users.service';
-import { CreateUserDto } from 'users/dto/create-user.dto';
+import { RegisterDto } from './dto/register.dto';
 import PostgresErrorCode from 'constants/postgresErrorCodes.enum';
 import User from 'database/entities/user.entity';
 import TokenPayload from './interfaces/tokenPayload.interface';
@@ -24,7 +24,7 @@ export class AuthenticationService {
     private readonly configService: ConfigService,
   ) {}
 
-  async register(registrationData: CreateUserDto) {
+  async register(registrationData: RegisterDto) {
     const hashedPassword = await passwordHashing(registrationData.password);
 
     try {

@@ -10,9 +10,13 @@ import { Repository } from 'typeorm';
 import User from 'database/entities/user.entity';
 import { passwordHashing } from 'utils/passwordHashing.util';
 import { generatePDF } from './logic/pdfGenerator.logic';
-import { CreateUserDto } from './dto/create-user.dto';
+import { RegisterDto } from 'authentication/dto/register.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
+import { UpdatePasswordDto } from './dto/update-password.dto';
+import PostgresErrorCode from 'constants/postgresErrorCodes.enum';
 import {
+  INTERNAL_SERVER_ERROR,
+  THIS_EMAIL_IS_BUSY,
   USER_HAS_NO_PDF_FILE,
   USER_NOT_FOUND,
   USER_WITH_THIS_EMAIL_DOES_NOT_EXIST,
@@ -25,7 +29,7 @@ export class UsersService {
     private userRepository: Repository<User>,
   ) {}
 
-  async create(createUserDto: CreateUserDto) {
+  async create(createUserDto: RegisterDto) {
     const newUser = await this.userRepository.create(createUserDto);
     await this.userRepository.save(newUser);
     return newUser;
@@ -61,17 +65,27 @@ export class UsersService {
   }
 
   async update(id: number, updateUserDto: UpdateUserDto) {
-    const { password } = updateUserDto;
-    if (password) {
-      const hashedPassword = await passwordHashing(password);
-      updateUserDto.password = hashedPassword;
+    try {
+      await this.userRepository.update(id, updateUserDto);
+      const user = this.userRepository.findOne(id);
+      if (user) {
+        return user;
+      }
+      throw new HttpException(USER_NOT_FOUND, HttpStatus.NOT_FOUND);
+    } catch (error) {
+      if (error?.code === PostgresErrorCode.UniqueViolation) {
+        throw new HttpException(THIS_EMAIL_IS_BUSY, HttpStatus.BAD_REQUEST);
+      }
+      throw new HttpException(
+        INTERNAL_SERVER_ERROR,
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
     }
-    await this.userRepository.update(id, updateUserDto);
-    const user = this.userRepository.findOne(id);
-    if (user) {
-      return user;
-    }
-    throw new HttpException(USER_NOT_FOUND, HttpStatus.NOT_FOUND);
+  }
+
+  async updatePassword(id: number, updatePasswordDto: UpdatePasswordDto) {
+    const hashedPassword = await passwordHashing(updatePasswordDto.password);
+    await this.userRepository.update(id, { password: hashedPassword });
   }
 
   async updateImage(id: number, imageUrl: string) {
