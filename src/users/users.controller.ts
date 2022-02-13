@@ -12,6 +12,7 @@ import {
   HttpCode,
   Post,
 } from '@nestjs/common';
+import { Request } from 'express';
 
 import { UsersService } from './users.service';
 import { UpdateUserDto } from './dto/update-user.dto';
@@ -19,17 +20,12 @@ import { JwtAuthenticationGuard } from 'authentication/guards/jwtAuthentication.
 import RequestWithUser from 'authentication/interfaces/requestWithUser.interface';
 import { EMPTY_COOKIE } from 'constants/authentication';
 import { AddImageDto } from './dto/add-image.dto';
+import { EmailDto } from './dto/email.dto';
 
 @Controller('users')
 @UseInterceptors(ClassSerializerInterceptor)
 export class UsersController {
   constructor(private readonly usersService: UsersService) {}
-
-  @Get(':id')
-  @UseGuards(JwtAuthenticationGuard)
-  findOne(@Param('id') id: string) {
-    return this.usersService.findById(Number(id));
-  }
 
   @Patch()
   @UseGuards(JwtAuthenticationGuard)
@@ -60,5 +56,32 @@ export class UsersController {
       user: { id },
     } = request;
     return this.usersService.updateImage(id, addImageDto.imageUrl);
+  }
+
+  @Post('generate-pdf')
+  @UseGuards(JwtAuthenticationGuard)
+  generatePDF(@Req() request: Request, @Body() emailDto: EmailDto) {
+    return this.usersService.generatePDF(emailDto.email);
+  }
+
+  @Get('/pdf')
+  @UseGuards(JwtAuthenticationGuard)
+  async getPdf(@Req() request: Request, @Body() emailDto: EmailDto) {
+    const { res } = request;
+    const pdfFile = await this.usersService.getPdf(emailDto.email);
+
+    res.set({
+      'Content-Type': 'application/pdf',
+      'Content-Disposition': `attachment; filename=${emailDto.email}.pdf`,
+      'Content-Length': pdfFile.length,
+    });
+
+    res.end(pdfFile);
+  }
+
+  @Get(':id')
+  @UseGuards(JwtAuthenticationGuard)
+  findOne(@Param('id') id: string) {
+    return this.usersService.findById(id);
   }
 }

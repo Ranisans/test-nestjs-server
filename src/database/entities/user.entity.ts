@@ -22,5 +22,7 @@ export default class User {
   @Column({ nullable: true })
   image: string;
 
-  // ! ToDo pdf column
+  @Exclude()
+  @Column({ type: 'bytea', nullable: true })
+  pdfFile: Buffer;
 }
