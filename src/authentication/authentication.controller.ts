@@ -22,8 +22,18 @@ export class AuthenticationController {
   constructor(private readonly authenticationService: AuthenticationService) {}
 
   @Post('register')
-  async register(@Body() registrationData: RegisterDto) {
-    return this.authenticationService.register(registrationData);
+  async register(
+    @Req() request: Request,
+    @Body() registrationData: RegisterDto,
+  ) {
+    const newUser = await this.authenticationService.register(registrationData);
+
+    const cookie = this.authenticationService.getCookieWithJwtToken(newUser);
+
+    const { res } = request;
+    res.setHeader('Set-Cookie', cookie);
+
+    return newUser;
   }
 
   @HttpCode(200)
