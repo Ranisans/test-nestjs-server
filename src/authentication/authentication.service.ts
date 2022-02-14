@@ -60,9 +60,9 @@ export class AuthenticationService {
   }
 
   async getAuthenticatedUser(email: string, password: string) {
-    try {
-      const user = await this.usersService.findByEmail(email);
+    const user = await this.usersService.findByEmail(email);
 
+    try {
       await this.verifyPassword(password, user.password);
 
       return user;

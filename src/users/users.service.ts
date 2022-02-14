@@ -43,7 +43,18 @@ export class UsersService {
       throw new NotFoundException();
     }
 
-    const user = await this.userRepository.findOne(userId);
+    const user = await this.userRepository
+      .createQueryBuilder('user')
+      .select([
+        'id',
+        'user.id',
+        'user.firstName',
+        'user.lastName',
+        'user.image',
+        'user.password',
+      ])
+      .where('id = :id', { id: userId })
+      .getOne();
     if (user) {
       return user;
     }
@@ -54,7 +65,18 @@ export class UsersService {
   }
 
   async findByEmail(email: string) {
-    const user = await this.userRepository.findOne({ email });
+    const user = await this.userRepository
+      .createQueryBuilder('user')
+      .select([
+        'id',
+        'user.id',
+        'user.firstName',
+        'user.lastName',
+        'user.image',
+        'user.password',
+      ])
+      .where('email = :email', { email })
+      .getOne();
     if (user) {
       return user;
     }
@@ -67,11 +89,11 @@ export class UsersService {
   async update(id: number, updateUserDto: UpdateUserDto) {
     try {
       await this.userRepository.update(id, updateUserDto);
-      const user = this.userRepository.findOne(id);
+      const user = this.findById(id);
       if (user) {
         return user;
       }
-      throw new HttpException(USER_NOT_FOUND, HttpStatus.NOT_FOUND);
+      // if we are here - user not found
     } catch (error) {
       if (error?.code === PostgresErrorCode.UniqueViolation) {
         throw new HttpException(THIS_EMAIL_IS_BUSY, HttpStatus.BAD_REQUEST);
@@ -81,6 +103,7 @@ export class UsersService {
         HttpStatus.INTERNAL_SERVER_ERROR,
       );
     }
+    throw new HttpException(USER_NOT_FOUND, HttpStatus.NOT_FOUND);
   }
 
   async updatePassword(id: number, updatePasswordDto: UpdatePasswordDto) {
@@ -90,7 +113,7 @@ export class UsersService {
 
   async updateImage(id: number, imageUrl: string) {
     await this.userRepository.update(id, { image: imageUrl });
-    const user = this.userRepository.findOne(id);
+    const user = this.findById(id);
     if (user) {
       return user;
     }
@@ -128,8 +151,17 @@ export class UsersService {
   }
 
   async getPdf(email: string) {
-    // if a user with this email - this.findByEmail will throw the USER_NOT_FOUND error
-    const user = await this.findByEmail(email);
+    const user = await this.userRepository
+      .createQueryBuilder('user')
+      .select(['id', 'user.pdf'])
+      .where('email = :email', { email })
+      .getOne();
+    if (!user) {
+      throw new HttpException(
+        USER_WITH_THIS_EMAIL_DOES_NOT_EXIST,
+        HttpStatus.NOT_FOUND,
+      );
+    }
 
     const { pdf } = user;
 
